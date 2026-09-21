@@ -31,6 +31,7 @@ param(
     [string] $SellTimeUk = "14:31",   # 1 min after US open   (normal 5h UK/US gap)
     [bool]   $AdjustForDstGap = $true,
     [bool]   $DryRun = $true,
+    [bool]   $ExtendedHours = $true,  # let orders fill outside regular session (needed since buy/sell sit at the close/open edge)
     [string] $NoBuyDates = "",        # early-close days, e.g. "2026-11-27,2026-12-24"
     [string] $Schedule = "0 * 13-20 * * 1-5",   # NCRONTAB, evaluated in UTC
 
@@ -106,6 +107,7 @@ $settings = @(
     @{ name = "SELL_TIME_UK";               value = $SellTimeUk }
     @{ name = "ADJUST_FOR_US_UK_DST_GAP";   value = "$AdjustForDstGap".ToLower() }
     @{ name = "DRY_RUN";                    value = "$DryRun".ToLower() }
+    @{ name = "EXTENDED_HOURS_TRADING";     value = "$ExtendedHours".ToLower() }
     @{ name = "NO_BUY_DATES";               value = $NoBuyDates }
     @{ name = "TRADE_SCHEDULE";             value = $Schedule }
 ) | ForEach-Object { $_ + @{ slotSetting = $false } }

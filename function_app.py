@@ -17,6 +17,12 @@ Everything is driven by app settings (environment variables):
                                   year the gap is 4h. When true, both times
                                   shift 1h earlier during those weeks.
   DRY_RUN                         true (default) | false
+  EXTENDED_HOURS_TRADING          true (default) | false. Lets orders fill in the
+                                  pre-market/after-market session, not just the
+                                  regular one - needed since BUY/SELL are timed
+                                  right at the close/open edge, where regular-
+                                  hours-only orders can miss the session and sit
+                                  pending until the next one instead of filling.
   NO_BUY_DATES                    optional, comma-separated YYYY-MM-DD (US date)
                                   for early-close days, e.g. 2026-11-27,2026-12-24
   TRADE_SCHEDULE                  NCRONTAB in UTC, default "0 * 13-20 * * 1-5"
@@ -91,6 +97,7 @@ def load_config() -> dict:
         "sell": _hhmm("SELL_TIME_UK"),
         "adjust": _flag("ADJUST_FOR_US_UK_DST_GAP", "true"),
         "dry_run": _flag("DRY_RUN", "true"),
+        "extended_hours": _flag("EXTENDED_HOURS_TRADING", "true"),
         "no_buy": {d.strip() for d in os.getenv("NO_BUY_DATES", "").split(",") if d.strip()},
     }
 
@@ -128,7 +135,8 @@ def place_market_order(s: requests.Session, c: dict, qty: float) -> None:
         log.info("[DRY RUN] %s %s x %s (%s)", side, c["ticker"], abs(qty), c["env"])
         return
     r = s.post(f"{c['base']}/equity/orders/market",
-               json={"ticker": c["ticker"], "quantity": qty}, timeout=30)
+               json={"ticker": c["ticker"], "quantity": qty,
+                     "extendedHours": c["extended_hours"]}, timeout=30)
     if not r.ok:
         raise RuntimeError(f"T212 order {r.status_code}: {r.text}")
     log.info("%s %s x %s placed (%s): %s", side, c["ticker"], abs(qty), c["env"], r.text)
